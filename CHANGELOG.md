@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/test-sem-tar/test/compare/v1.0.0...v1.1.0) (2025-06-27)
+
+
+### Features
+
+* test ([bfebb3a](https://github.com/test-sem-tar/test/commit/bfebb3a2b9ddb31a32d5d5f06d21e19850ce990e))
+
 # 1.0.0 (2025-06-27)
 
 
