@@ -1,0 +1,65 @@
+# Info on the action
+name: Automatic Release
+run-name: Automatically releasing 🚀
+
+on:
+  # Run automatically on main pushes
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Generate token'
+        id: generate_token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: ${{ secrets.RELEASER_APP_ID }}
+          private_key: ${{ secrets.RELEASER_APP_KEY }}
+      # Check out the code to be able to deploy
+      - name: 'Checking out code'
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate_token.outputs.token }}
+      # Setting up Node LTS
+      - name: 'Setting up Node'
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: lts/*
+      # Make sure all the dependencies are ok and installed
+      - name: 'Installing dependencies'
+        run: |
+          npm ci
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
+
+      - name: 'Create semantic-release config file'
+        run: |
+          cat << 'EOF' > .releaserc
+          {
+            "branches": ["main", "master"],
+            "plugins": [
+              "@semantic-release/commit-analyzer",
+              "@semantic-release/release-notes-generator",
+              "@semantic-release/changelog",
+              "@semantic-release/github",
+              [
+                "@semantic-release/git",
+                {
+                  "assets": ["package.json", "CHANGELOG.md"],
+                  "message": "chore(release):${nextRelease.version}[skip ci]\n\n${nextRelease.notes}"
+                }
+              ]
+            ]
+          }
+          EOF
+          cat .releaserc
+
+      # Install semantic release
+      - name: 'Releasing via Semantic Release'
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
